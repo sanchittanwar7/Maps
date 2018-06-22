@@ -1,6 +1,10 @@
 import React, { Component } from 'react'
 import { Map, TileLayer, Marker, Popup, Circle, Polygon, Rectangle, FeatureGroup, LayerGroup, } from 'react-leaflet'
 import { FormGroup, FormControl, InputGroup, Glyphicon } from 'react-bootstrap'
+var jsonQuery = require('json-query')
+const countryData = require('../../countries.json')
+const cityData = require('../../cities.json')
+
 
 import L from 'leaflet'
 
@@ -24,31 +28,87 @@ export default class SimpleExample extends Component {
     query: ""
   }
 
+  modifyString() {
+    var str = this.state.query
+    var ans = ''
+    str.split(' ').map((word, key) => {
+        ans = `${ans}${word.charAt(0).toUpperCase()}${word.slice(1)} `
+    })
+    console.log(ans)
+    return ans
+  }
+
   getCoordinates() {
     console.log('here')
-    let URL = `http://api.geonames.org/searchJSON?q=${this.state.query}&maxRows=1&username=sanchittanwar7`
-    fetch(URL, {
-        method: 'GET'
+    var lat = 0, lng = 0, zoom = 0
+    var data = {
+        people: countryData
+    }
+    var searchString = this.modifyString()
+    // var searchString = this.state.query.charAt(0).toUpperCase() + this.state.query.slice(1)
+    let ans = jsonQuery(`people[name=${searchString}]`, {
+      data: data
     })
-    .then(response => response.json())
-    .then(json => {
-        console.log(json);
-        let center = [], zoom
-        center.push(parseFloat(json.geonames[0].lat))
-        center.push(parseFloat(json.geonames[0].lng))
-        if(json.geonames[0].fcl === 'A')
-            zoom = 4
-        else
-            zoom = 10
-        let viewport = {
-            center: center,
-            zoom: zoom
+    // console.log(ans.parents[2].value.latitude)
+    console.log(ans)
+    if(ans.key === null){
+        data = {
+            people: cityData
         }
-        console.log(viewport)
-        this.setState({viewport})
-        // console.log('artist', artist);
-        // this.setState({artist, stats: artist.stats, bio: artist.bio, images: artist.image});
-    });
+        ans = jsonQuery(`people[FIELD1=${searchString}]`, {
+            data: data
+        })
+        console.log('city')
+        console.log(ans)
+        lat = ans.value.FIELD3
+        lng = ans.value.FIELD4
+
+    }
+    else{
+        lat = ans.value.latitude
+        lng = ans.value.longitude
+        zoom = ans.value.zoom
+        console.log(zoom)
+    }
+    console.log('latitude' + lat)
+    console.log('longitude' + lng)
+    console.log('zoom' + zoom)
+
+    let center = []
+    center.push(lat)
+    center.push(lng)
+    if(zoom === 0)
+        zoom = 10
+    let viewport = {
+        center: center,
+        zoom: zoom
+    }
+    console.log(viewport)
+    this.setState({viewport})
+
+    // let URL = `http://api.geonames.org/searchJSON?q=${this.state.query}&maxRows=1&username=sanchittanwar7`
+    // fetch(URL, {
+    //     method: 'GET'
+    // })
+    // .then(response => response.json())
+    // .then(json => {
+    //     console.log(json);
+    //     let center = [], zoom
+    //     center.push(parseFloat(json.geonames[0].lat))
+    //     center.push(parseFloat(json.geonames[0].lng))
+    //     if(json.geonames[0].fcl === 'A')
+    //         zoom = 4
+    //     else
+    //         zoom = 10
+    //     let viewport = {
+    //         center: center,
+    //         zoom: zoom
+    //     }
+    //     console.log(viewport)
+    //     this.setState({viewport})
+    //     // console.log('artist', artist);
+    //     // this.setState({artist, stats: artist.stats, bio: artist.bio, images: artist.image});
+    // });
   }
 
       onClickInner = () => {
@@ -180,7 +240,7 @@ export default class SimpleExample extends Component {
             }
         }
         onViewportChanged={viewport => {
-            console.log(viewport)
+            // console.log(viewport)
             this.setState({ viewport })
           }
         }
