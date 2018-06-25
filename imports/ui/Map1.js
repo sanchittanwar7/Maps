@@ -280,7 +280,7 @@ export default class SimpleExample extends Component {
             }
         }
         onViewportChanged={viewport => {
-            // console.log(viewport)
+            console.log(viewport)
             this.setState({ viewport })
           }
         }
